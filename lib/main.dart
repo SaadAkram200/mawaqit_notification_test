@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:alarm/alarm.dart';
+import 'package:alarm/model/alarm_settings.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -33,10 +35,27 @@ Future<void> storeValueInFirestore() async {
   }
 }
 
+void setAlarm()async {
+  print("from set alarm");
+  DateTime now = DateTime.now();
+    final alarmSettings = AlarmSettings(
+      id: 42,
+      dateTime: now.add(const Duration(minutes: 5)),
+      assetAudioPath: 'assets/sound.mp3',
+      loopAudio: true,
+      vibrate: true,
+      volume: 0.8,
+      fadeDuration: 3.0,
+      notificationTitle: 'Asar prayer',
+      notificationBody: 'adhan',
+      enableNotificationOnKill: false,
+    );
+    await Alarm.set(alarmSettings: alarmSettings);
+}
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+  await Alarm.init();
   runApp(const MyApp());
 
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
@@ -72,7 +91,10 @@ class _MyAppState extends State<MyApp> {
             requiresDeviceIdle: false,
             requiredNetworkType: NetworkType.NONE), (String taskId) async {
       print("[BackgroundFetch] Event received $taskId");
+      
       await storeValueInFirestore();
+      setAlarm();
+      
       setState(() {
         events.insert(0, DateTime.now());
       });
