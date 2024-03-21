@@ -1,0 +1,31 @@
+name: mawaqit_notification_test
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.2.6 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_ringtone_player: ^4.0.0+2
+  alarm: ^3.0.14
+  firebase_core: ^2.17.0
+  cloud_firestore: ^4.9.3
+  firebase_storage: ^11.4.0
+  background_fetch:
+    git:
+      url: https://github.com/transistorsoft/flutter_background_fetch
+      
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
