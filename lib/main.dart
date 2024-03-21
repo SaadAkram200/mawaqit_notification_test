@@ -35,23 +35,24 @@ Future<void> storeValueInFirestore() async {
   }
 }
 
-void setAlarm()async {
+void setAlarm() async {
   print("from set alarm");
   DateTime now = DateTime.now();
-    final alarmSettings = AlarmSettings(
-      id: 42,
-      dateTime: now.add(const Duration(minutes: 5)),
-      assetAudioPath: 'assets/sound.mp3',
-      loopAudio: true,
-      vibrate: true,
-      volume: 0.8,
-      fadeDuration: 3.0,
-      notificationTitle: 'Asar prayer',
-      notificationBody: 'adhan',
-      enableNotificationOnKill: false,
-    );
-    await Alarm.set(alarmSettings: alarmSettings);
+  final alarmSettings = AlarmSettings(
+    id: 42,
+    dateTime: now.add(const Duration(minutes: 5)),
+    assetAudioPath: 'assets/sound.mp3',
+    loopAudio: true,
+    vibrate: true,
+    volume: 0.8,
+    fadeDuration: 3.0,
+    notificationTitle: 'Asar prayer',
+    notificationBody: 'adhan',
+    enableNotificationOnKill: false,
+  );
+  await Alarm.set(alarmSettings: alarmSettings);
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -91,10 +92,10 @@ class _MyAppState extends State<MyApp> {
             requiresDeviceIdle: false,
             requiredNetworkType: NetworkType.NONE), (String taskId) async {
       print("[BackgroundFetch] Event received $taskId");
-      
+
       await storeValueInFirestore();
       setAlarm();
-      
+
       setState(() {
         events.insert(0, DateTime.now());
       });
@@ -167,12 +168,11 @@ class _MyAppState extends State<MyApp> {
               }),
         ),
         bottomNavigationBar: BottomAppBar(
-            child: Row(children: [
-          TextButton(onPressed: _onClickStatus, child: const Text('Status')),
-          Container(
-              margin: const EdgeInsets.only(left: 20.0),
-              child: Text("$_status"))
-        ])),
+          child: ElevatedButton(
+            onPressed: () => Alarm.stopAll(),
+            child: const Text('Stop alarm'),
+          ),
+        ),
       ),
     );
   }
