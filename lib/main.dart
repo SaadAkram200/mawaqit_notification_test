@@ -5,27 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import 'package:background_fetch/background_fetch.dart';
+//import 'package:background_fetch/background_fetch.dart';
 import 'package:mawaqit_notification_test/firebase_options.dart';
-
-@pragma('vm:entry-point')
-void backgroundFetchHeadlessTask(HeadlessTask task) async {
-  String taskId = task.taskId;
-  bool isTimeout = task.timeout;
-  if (isTimeout) {
-    print("[BackgroundFetch] Headless task timed-out: $taskId");
-    BackgroundFetch.finish(taskId);
-    return;
-  }
-  print('[BackgroundFetch] Headless event received.');
-  // Do your work here...
-  await storeValueInFirestore();
-  BackgroundFetch.finish(taskId);
-}
+import 'package:workmanager/workmanager.dart';
 
 Future<void> storeValueInFirestore() async {
   try {
-    print("from storeValueInFirestore");
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     await firestore.collection('values').add({
       'timestamp': DateTime.now(),
@@ -35,22 +20,48 @@ Future<void> storeValueInFirestore() async {
   }
 }
 
-void setAlarm() async {
-  print("from set alarm");
-  DateTime now = DateTime.now();
-  final alarmSettings = AlarmSettings(
-    id: 42,
-    dateTime: now.add(const Duration(minutes: 5)),
-    assetAudioPath: 'assets/sound.mp3',
-    loopAudio: true,
-    vibrate: true,
-    volume: 0.8,
-    fadeDuration: 3.0,
-    notificationTitle: 'Asar prayer',
-    notificationBody: 'adhan',
-    enableNotificationOnKill: false,
-  );
-  await Alarm.set(alarmSettings: alarmSettings);
+// void setAlarm() async {
+//   DateTime now = DateTime.now();
+//   final alarmSettings = AlarmSettings(
+//     id: 42,
+//     dateTime: now.add(const Duration(minutes: 5)),
+//     assetAudioPath: 'assets/sound.mp3',
+//     loopAudio: true,
+//     vibrate: true,
+//     volume: 0.8,
+//     fadeDuration: 3.0,
+//     notificationTitle: 'Asar prayer',
+//     notificationBody: 'adhan',
+//     enableNotificationOnKill: false,
+//   );
+//   await Alarm.set(alarmSettings: alarmSettings);
+// }
+
+// @pragma('vm:entry-point')
+// void backgroundFetchHeadlessTask(HeadlessTask task) async {
+//   String taskId = task.taskId;
+//   bool isTimeout = task.timeout;
+//   if (isTimeout) {
+//     print("[BackgroundFetch] Headless task timed-out: $taskId");
+//     BackgroundFetch.finish(taskId);
+//     return;
+//   }
+//   print('[BackgroundFetch] Headless event received.');
+//   // Do your work here...
+//   await storeValueInFirestore();
+//   BackgroundFetch.finish(taskId);
+// }
+
+void callbackDispatcher() {
+  Workmanager().executeTask((taskName, inputData) async {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+
+    print("[WorkManager] Headless event received.");
+    await storeValueInFirestore();
+    // setAlarm();
+    return true;
+  });
 }
 
 void main() async {
@@ -58,8 +69,14 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Alarm.init();
   runApp(const MyApp());
+  Workmanager().initialize(callbackDispatcher);
 
-  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+  Workmanager().registerPeriodicTask(
+    "1",
+    "backgroundFetchTask",
+    frequency: const Duration(minutes: 15),
+  );
+  //BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
 }
 
 class MyApp extends StatefulWidget {
@@ -80,37 +97,38 @@ class _MyAppState extends State<MyApp> {
     initPlatformState();
   }
 
+  // Future<void> initPlatformState() async {
+  //   int status = await BackgroundFetch.configure(
+  //       BackgroundFetchConfig(
+  //           minimumFetchInterval: 2,
+  //           stopOnTerminate: false,
+  //           enableHeadless: true,
+  //           requiresBatteryNotLow: false,
+  //           requiresCharging: false,
+  //           requiresStorageNotLow: false,
+  //           requiresDeviceIdle: false,
+  //           requiredNetworkType: NetworkType.NONE), (String taskId) async {
+  //     print("[BackgroundFetch] Event received $taskId");
+  //     await storeValueInFirestore();
+  //     setAlarm();
+  //     setState(() {
+  //       events.insert(0, DateTime.now());
+  //     });
+  //     BackgroundFetch.finish(taskId);
+  //   }, (String taskId) async {
+  //     print("[BackgroundFetch] TASK TIMEOUT taskId: $taskId");
+  //     BackgroundFetch.finish(taskId);
+  //   });
+  //   print('[BackgroundFetch] configure success: $status');
+  //   setState(() {
+  //     _status = status;
+  //   });
+  //   if (!mounted) return;
+  // }
+
   Future<void> initPlatformState() async {
-    int status = await BackgroundFetch.configure(
-        BackgroundFetchConfig(
-            minimumFetchInterval: 2,
-            stopOnTerminate: false,
-            enableHeadless: true,
-            requiresBatteryNotLow: false,
-            requiresCharging: false,
-            requiresStorageNotLow: false,
-            requiresDeviceIdle: false,
-            requiredNetworkType: NetworkType.NONE), (String taskId) async {
-      print("[BackgroundFetch] Event received $taskId");
-
-      await storeValueInFirestore();
-      setAlarm();
-
-      setState(() {
-        events.insert(0, DateTime.now());
-      });
-
-      BackgroundFetch.finish(taskId);
-    }, (String taskId) async {
-      print("[BackgroundFetch] TASK TIMEOUT taskId: $taskId");
-      BackgroundFetch.finish(taskId);
-    });
-    print('[BackgroundFetch] configure success: $status');
-    setState(() {
-      _status = status;
-    });
-
-    if (!mounted) return;
+    Workmanager().initialize(callbackDispatcher);
+    print('[WorkManager] Initialized');
   }
 
   void _onClickEnable(enabled) {
@@ -118,25 +136,42 @@ class _MyAppState extends State<MyApp> {
       _enabled = enabled;
     });
     if (enabled) {
-      BackgroundFetch.start().then((int status) {
-        print('[BackgroundFetch] start success: $status');
-      }).catchError((e) {
-        print('[BackgroundFetch] start FAILURE: $e');
-      });
+      Workmanager().registerPeriodicTask(
+        "1",
+        "backgroundFetchTask",
+        frequency: Duration(minutes: 15),
+      );
+      print('[WorkManager] Task started');
     } else {
-      BackgroundFetch.stop().then((int status) {
-        print('[BackgroundFetch] stop success: $status');
-      });
+      Workmanager().cancelAll();
+      print('[WorkManager] Task stopped');
     }
   }
 
-  void _onClickStatus() async {
-    int status = await BackgroundFetch.status;
-    print('[BackgroundFetch] status: $status');
-    setState(() {
-      _status = status;
-    });
-  }
+  // void _onClickEnable(enabled) {
+  //   setState(() {
+  //     _enabled = enabled;
+  //   });
+  //   if (enabled) {
+  //     BackgroundFetch.start().then((int status) {
+  //       print('[BackgroundFetch] start success: $status');
+  //     }).catchError((e) {
+  //       print('[BackgroundFetch] start FAILURE: $e');
+  //     });
+  //   } else {
+  //     BackgroundFetch.stop().then((int status) {
+  //       print('[BackgroundFetch] stop success: $status');
+  //     });
+  //   }
+  // }
+
+  // void _onClickStatus() async {
+  //   int status = await BackgroundFetch.status;
+  //   print('[BackgroundFetch] status: $status');
+  //   setState(() {
+  //     _status = status;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {

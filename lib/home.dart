@@ -1,4 +1,4 @@
-import 'package:background_fetch/background_fetch.dart';
+//import 'package:background_fetch/background_fetch.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -16,32 +16,32 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
  
-    initBackgroundFetch();
+  //  initBackgroundFetch();
   }
 
-  Future<void> initBackgroundFetch() async {
-    print("from initBackgroundFetch");
-    BackgroundFetch.configure(BackgroundFetchConfig(
-      minimumFetchInterval: 1,
-      stopOnTerminate: false,
-      enableHeadless: true,
-      startOnBoot: true,
-      requiresBatteryNotLow: false,
-      requiresCharging: false,
-      requiresStorageNotLow: false,
-      requiresDeviceIdle: false,
-      requiredNetworkType: NetworkType.NONE,
-    ), (String taskId) async {
+  // Future<void> initBackgroundFetch() async {
+  //   print("from initBackgroundFetch");
+  //   BackgroundFetch.configure(BackgroundFetchConfig(
+  //     minimumFetchInterval: 1,
+  //     stopOnTerminate: false,
+  //     enableHeadless: true,
+  //     startOnBoot: true,
+  //     requiresBatteryNotLow: false,
+  //     requiresCharging: false,
+  //     requiresStorageNotLow: false,
+  //     requiresDeviceIdle: false,
+  //     requiredNetworkType: NetworkType.NONE,
+  //   ), (String taskId) async {
       
-      print("[Background Fetch] Event received: $taskId");
-      await storeValueInFirestore();
-      BackgroundFetch.finish(taskId);
-    }).then((int status) {
-      print('[Background Fetch] configure success: $status');
-    }).catchError((e) {
-      print('[Background Fetch] configure error: $e');
-    });
-  }
+  //     print("[Background Fetch] Event received: $taskId");
+  //     await storeValueInFirestore();
+  //     BackgroundFetch.finish(taskId);
+  //   }).then((int status) {
+  //     print('[Background Fetch] configure success: $status');
+  //   }).catchError((e) {
+  //     print('[Background Fetch] configure error: $e');
+  //   });
+  // }
 
   Future<void> storeValueInFirestore() async {
     try {
