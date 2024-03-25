@@ -11,6 +11,7 @@ import 'package:mawaqit_notification_test/firebase_options.dart';
 import 'package:workmanager/workmanager.dart';
 
 Future<void> storeValueInFirestore() async {
+  print("from storeValue function");
   String checkPlatform;
   if (Platform.isIOS) {
     checkPlatform = "from ios";
@@ -28,11 +29,12 @@ Future<void> storeValueInFirestore() async {
   }
 }
 
-void setAlarm() async {
+Future<void> setAlarm() async {
+  print("from setAlarm");
   DateTime now = DateTime.now();
   final alarmSettings = AlarmSettings(
-    id: 42,
-    dateTime: now.add(const Duration(minutes: 5)),
+    id: 41,
+    dateTime: now , //.add(const Duration(minutes: 5)),
     assetAudioPath: 'assets/sound.mp3',
     loopAudio: true,
     vibrate: true,
@@ -67,7 +69,7 @@ void callbackDispatcher() {
     await Alarm.init();
     print("[WorkManager] Headless event received.");
     await storeValueInFirestore();
-    setAlarm();
+    await setAlarm();
     return true;
   }); 
 }
@@ -212,7 +214,7 @@ class _MyAppState extends State<MyApp> {
         ),
         bottomNavigationBar: BottomAppBar(
           child: ElevatedButton(
-            onPressed: () => Alarm.stopAll(),
+            onPressed: () => Alarm.stop(41),
             child: const Text('Stop alarm'),
           ),
         ),
