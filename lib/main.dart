@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:alarm/alarm.dart';
 import 'package:alarm/model/alarm_settings.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,32 +11,39 @@ import 'package:mawaqit_notification_test/firebase_options.dart';
 import 'package:workmanager/workmanager.dart';
 
 Future<void> storeValueInFirestore() async {
+  String checkPlatform;
+  if (Platform.isIOS) {
+    checkPlatform = "from ios";
+  } else{
+    checkPlatform = "from android";
+  }
   try {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     await firestore.collection('values').add({
       'timestamp': DateTime.now(),
+      'platform': checkPlatform,
     });
   } catch (e) {
     print('Error storing value in Firestore: $e');
   }
 }
 
-// void setAlarm() async {
-//   DateTime now = DateTime.now();
-//   final alarmSettings = AlarmSettings(
-//     id: 42,
-//     dateTime: now.add(const Duration(minutes: 5)),
-//     assetAudioPath: 'assets/sound.mp3',
-//     loopAudio: true,
-//     vibrate: true,
-//     volume: 0.8,
-//     fadeDuration: 3.0,
-//     notificationTitle: 'Asar prayer',
-//     notificationBody: 'adhan',
-//     enableNotificationOnKill: false,
-//   );
-//   await Alarm.set(alarmSettings: alarmSettings);
-// }
+void setAlarm() async {
+  DateTime now = DateTime.now();
+  final alarmSettings = AlarmSettings(
+    id: 42,
+    dateTime: now.add(const Duration(minutes: 5)),
+    assetAudioPath: 'assets/sound.mp3',
+    loopAudio: true,
+    vibrate: true,
+    volume: 0.8,
+    fadeDuration: 3.0,
+    notificationTitle: 'Asar prayer',
+    notificationBody: 'adhan',
+    enableNotificationOnKill: false,
+  );
+  await Alarm.set(alarmSettings: alarmSettings);
+}
 
 // @pragma('vm:entry-point')
 // void backgroundFetchHeadlessTask(HeadlessTask task) async {
@@ -56,12 +64,12 @@ void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
-
+    await Alarm.init();
     print("[WorkManager] Headless event received.");
     await storeValueInFirestore();
-    // setAlarm();
+    setAlarm();
     return true;
-  });
+  }); 
 }
 
 void main() async {
